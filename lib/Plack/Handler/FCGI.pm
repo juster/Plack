@@ -74,6 +74,20 @@ sub run {
     while ($request->Accept >= 0) {
         $proc_manager && $proc_manager->pm_pre_dispatch;
 
+        # HTTP_CONTENT_... entries are disallowed in the PSGI spec.
+        if ( exists $env{ 'HTTP_CONTENT_LENGTH' })  {
+            print STDERR "HTTP_CONTENT_LENGTH\n";
+            my $oldval = delete $env{ 'HTTP_CONTENT_LENGTH' };
+            $env{ 'content_length' } = $oldval
+                unless defined $env{ 'content_length' };
+        }
+
+        if ( exists $env{ 'HTTP_CONTENT_TYPE' } ) { 
+            print STDERR "HTTP_CONTENT_TYPE\n";
+            my $oldval = delete $env{ 'HTTP_CONTENT_TYPE' };
+            $env{ 'content_type' } ||= $oldval
+        }
+
         my $env = {
             %env,
             'psgi.version'      => [1,1],
